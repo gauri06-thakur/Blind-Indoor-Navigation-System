@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Blind Indoor Navigation</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f7fb;
+            color: #1f2937;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: #1f4e79;
+            color: white;
+            padding: 30px;
+            border-radius: 18px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0 0 10px;
+            font-size: 30px;
+        }
+
+        .card {
+            background: white;
+            margin-top: 20px;
+            padding: 25px;
+            border-radius: 18px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        label {
+            display: block;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        select {
+            width: 100%;
+            padding: 15px;
+            font-size: 17px;
+            border-radius: 10px;
+            border: 1px solid #ccc;
+            margin-bottom: 20px;
+        }
+
+        button {
+            width: 100%;
+            padding: 16px;
+            font-size: 18px;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            background: #1f4e79;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .route-box {
+            margin-top: 20px;
+            padding: 20px;
+            background: #eef6ff;
+            border-radius: 12px;
+            font-size: 17px;
+            line-height: 1.7;
+            white-space: pre-line;
+        }
+        .map-box {
+    margin-top: 20px;
+    background: white;
+    padding: 25px;
+    border-radius: 18px;
+}
+
+.map {
+    position: relative;
+    height: 350px;
+    border: 2px solid #ccc;
+    border-radius: 15px;
+    background: #fafafa;
+}
+
+.location {
+    position: absolute;
+    padding: 12px;
+    border: 2px solid #333;
+    border-radius: 10px;
+    background: white;
+    font-weight: bold;
+}
+
+.entrance {
+    left: 30px;
+    top: 150px;
+}
+
+.corridor {
+    left: 250px;
+    top: 150px;
+}
+
+.room101 {
+    left: 230px;
+    top: 50px;
+}
+
+.room102 {
+    left: 430px;
+    top: 150px;
+}
+
+.library {
+    left: 230px;
+    top: 250px;
+}
+
+        
+
+
+        .accessibility {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 15px;
+        }
+        .location.active {
+    background: #1f4e79;
+    color: white;
+    border: 3px solid #111;
+    transform: scale(1.05);
+}
+.next-step {
+    margin-top: 15px;
+    padding: 18px;
+    border-radius: 12px;
+    background: #fff4d6;
+    font-size: 20px;
+    font-weight: bold;
+    text-align: center;
+}
+
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <div class="header">
+            <h1>🧭 Blind Indoor Navigation</h1>
+            <p>Accessible navigation inside buildings</p>
+        </div>
+
+        <div class="card">
+
+            <label for="start">📍 Current Location</label>
+
+            <select id="start">
+                <option>Entrance</option>
+                <option>Corridor</option>
+                <option>Room 101</option>
+                <option>Room 102</option>
+                <option>Library</option>
+            </select>
+
+            <label for="destination">🎯 Destination</label>
+
+            <select id="destination">
+                <option>Library</option>
+                <option>Room 101</option>
+                <option>Room 102</option>
+                <option>Entrance</option>
+                <option>Corridor</option>
+            </select>
+
+            <button onclick="findRoute()">
+                🔊 Find Route & Speak
+            </button>
+
+            <div class="route-box" id="route">
+    Route will appear here.
+</div>
+
+<div class="next-step" id="nextStep">
+    Next instruction will appear here.
+</div>
+
+<button id="nextButton" onclick="nextInstruction()">
+    ➡️ Next Instruction
+</button>
+                Your navigation instructions will appear here.
+            </div>
+
+        </div>
+        <div class="map-box">
+    <h2>🗺️ Indoor Map</h2>
+
+    <div class="map">
+
+        <div class="location entrance">Entrance</div>
+
+        <div class="location corridor">Corridor</div>
+
+        <div class="location room101">Room 101</div>
+
+        <div class="location room102">Room 102</div>
+
+        <div class="location library">Library</div>
+
+    </div>
+</div>
+
+        <div class="accessibility">
+            Designed with accessibility and voice guidance in mind.
+        </div>
+
+    </div>
+
+
+    <script>
+        let currentInstructions = [];
+let currentInstructionIndex = 0;
+
+function nextInstruction() {
+
+    if (currentInstructions.length === 0) {
+        document.getElementById("nextStep").innerText =
+            "First find a route.";
+        return;
+    }
+
+    currentInstructionIndex++;
+
+    if (currentInstructionIndex >= currentInstructions.length) {
+        document.getElementById("nextStep").innerText =
+            "You have reached your destination.";
+        return;
+    }
+
+    const instruction =
+        currentInstructions[currentInstructionIndex];
+
+    document.getElementById("nextStep").innerText =
+        instruction;
+
+    const speech =
+        new SpeechSynthesisUtterance(instruction);
+
+    speech.rate = 0.9;
+
+    window.speechSynthesis.speak(speech);
+}
+
+        function findRoute() {
+
+            const start =
+                document.getElementById("start").value;
+
+            const destination =
+                document.getElementById("destination").value;
+
+            fetch("/find-route", {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+                    start: start,
+                    destination: destination
+                })
+
+            })
+
+            .then(response => response.json())
+
+            .then(data => {
+                currentInstructions = data.instructions;
+currentInstructionIndex = 0;
+                document.querySelectorAll(".location").forEach(location => {
+    location.classList.remove("active");
+});
+
+data.route.forEach(place => {
+
+    const locationElement =
+        document.querySelector(
+            "." + place.toLowerCase().replace(" ", "")
+        );
+
+    if (locationElement) {
+        locationElement.classList.add("active");
+    }
+
+});
+if (data.instructions.length > 0) {
+    document.getElementById("nextStep").innerText =
+        data.instructions[0];
+} else {
+    document.getElementById("nextStep").innerText =
+        "You have reached your destination.";
+}
+
+const routeText =
+    data.route.join(" → ");
+
+const instructionText =
+    data.instructions.join(" ");
+
+document.getElementById("route").innerText =
+    "Route:\n" +
+    routeText;
+
+const speech =
+    new SpeechSynthesisUtterance(
+        "Your route is. " +
+        instructionText
+    );
+
+speech.rate = 0.9;
+
+window.speechSynthesis.speak(speech);
+
+    });
+}
+</script>
+
+    </script>
+
+</body>
+
+</html>
